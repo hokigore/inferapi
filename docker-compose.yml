@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  inferapi:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    networks:
+      - inferapi-net
+
+  # Ollama backend (optional — remove if using external Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    networks:
+      - inferapi-net
+
+  # vLLM backend (optional — requires GPU)
+  # vllm:
+  #   image: vllm/vllm-openai:latest
+  #   ports:
+  #     - "8001:8000"
+  #   volumes:
+  #     - huggingface-cache:/root/.cache/huggingface
+  #   command: ["--model", "meta-llama/Llama-3-8B", "--dtype", "float16"]
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
+  #   restart: unless-stopped
+  #   networks:
+  #     - inferapi-net
+
+volumes:
+  ollama-models:
+  huggingface-cache:
+
+networks:
+  inferapi-net:
+    driver: bridge
